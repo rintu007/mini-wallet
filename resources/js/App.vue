@@ -1,3 +1,26 @@
+<template>
+    <div id="app">
+        <div v-if="!user" class="login-container">
+            <LoginForm @login="handleLogin" />
+        </div>
+        <div v-else class="app-container">
+            <Header :user="user" @logout="handleLogout" />
+            <div class="main-content">
+                <BalanceSection :balance="currentBalance" />
+                <TransferForm 
+                    :users="users" 
+                    @transfer="handleTransfer" 
+                    :loading="transferLoading" 
+                />
+                <TransactionHistory 
+                    :transactions="transactions" 
+                    :loading="transactionsLoading" 
+                />
+            </div>
+        </div>
+    </div>
+</template>
+
 <script>
 import axios from 'axios';
 import Pusher from 'pusher-js';
@@ -25,11 +48,6 @@ export default {
             transactionsLoading: false,
             transferLoading: false,
             pusher: null,
-            notification: {
-                show: false,
-                message: '',
-                type: 'success'
-            }
         };
     },
     async mounted() {
@@ -59,18 +77,18 @@ export default {
                 this.currentBalance = parseFloat(response.data.current_balance);
             } catch (error) {
                 console.error('Error fetching transactions:', error);
-                this.showNotification('Error loading transactions', 'error');
             } finally {
                 this.transactionsLoading = false;
             }
         },
         async fetchUsers() {
             try {
-                const response = await axios.get('/api/users');
+                // In a real app, you'd have an endpoint to fetch other users
+                // For now, we'll simulate this with a fixed list
+                const response = await axios.get('/api/users'); // You'll need to create this endpoint
                 this.users = response.data;
             } catch (error) {
                 console.error('Error fetching users:', error);
-                this.showNotification('Error loading users', 'error');
             }
         },
         async handleLogin(credentials) {
@@ -87,8 +105,6 @@ export default {
                 await this.fetchTransactions();
                 await this.fetchUsers();
                 this.initPusher();
-                
-                this.showNotification('Login successful!', 'success');
             } catch (error) {
                 throw new Error('Invalid credentials');
             }
@@ -96,7 +112,6 @@ export default {
         async handleLogout() {
             try {
                 await axios.post('/api/logout');
-                this.showNotification('Logged out successfully', 'success');
             } catch (error) {
                 console.error('Logout error:', error);
             } finally {
@@ -114,71 +129,41 @@ export default {
         async handleTransfer(transferData) {
             this.transferLoading = true;
             try {
-                const response = await axios.post('/api/transactions', transferData);
-                
-                // Show success message
-                this.showNotification('Transfer completed successfully!', 'success');
-                
-                // Update balance immediately from response
-                this.currentBalance = parseFloat(response.data.new_balance);
-                
-                // Refresh transactions list to include the new transaction
-                await this.fetchTransactions();
-                
+                await axios.post('/api/transactions', transferData);
+                // Real-time update will handle the UI update
             } catch (error) {
                 const message = error.response?.data?.message || 'Transfer failed';
-                this.showNotification(message, 'error');
                 throw new Error(message);
             } finally {
                 this.transferLoading = false;
             }
         },
         initPusher() {
-            try {
-                this.pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
-                    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-                    forceTLS: true
-                });
+            this.pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
+                cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+                forceTLS: true
+            });
 
-                const channel = this.pusher.subscribe(`user.${this.user.id}`);
-                
-                channel.bind('transaction.completed', (data) => {
-                    console.log('Pusher event received:', data);
-                    this.handleRealTimeUpdate(data);
-                });
-
-                // Handle connection events
-                this.pusher.connection.bind('connected', () => {
-                    console.log('Pusher connected successfully');
-                });
-
-                this.pusher.connection.bind('error', (err) => {
-                    console.error('Pusher connection error:', err);
-                });
-
-            } catch (error) {
-                console.error('Pusher initialization error:', error);
-            }
+            const channel = this.pusher.subscribe(`user.${this.user.id}`);
+            
+            channel.bind('transaction.completed', (data) => {
+                this.handleRealTimeUpdate(data);
+            });
         },
         handleRealTimeUpdate(data) {
-            console.log('Processing real-time update:', data);
-            
-            // Update balance based on transaction type
-            if (data.transaction.sender_id === this.user.id) {
-                // Sent money - subtract total amount
-                this.currentBalance -= parseFloat(data.transaction.total_amount);
-            } else {
-                // Received money - add amount
-                this.currentBalance += parseFloat(data.transaction.amount);
-            }
+            // Update balance
+            this.currentBalance = parseFloat(data.transaction.sender_id === this.user.id 
+                ? this.currentBalance - parseFloat(data.transaction.total_amount)
+                : this.currentBalance + parseFloat(data.transaction.amount)
+            );
 
-            // Add transaction to the beginning of the list
+            // Add transaction to history
             this.transactions.unshift(data.transaction);
 
             // Show notification
-            this.showRealTimeNotification(data);
+            this.showNotification(data);
         },
-        showRealTimeNotification(data) {
+        showNotification(data) {
             const type = data.transaction.sender_id === this.user.id ? 'sent' : 'received';
             const amount = parseFloat(data.transaction.amount).toFixed(2);
             const name = type === 'sent' 
@@ -189,94 +174,55 @@ export default {
                 ? `You sent $${amount} to ${name}`
                 : `You received $${amount} from ${name}`;
             
-            this.showNotification(message, 'info');
-        },
-        showNotification(message, type = 'success') {
-            this.notification = {
-                show: true,
-                message,
-                type
-            };
-            
-            // Auto hide after 5 seconds
-            setTimeout(() => {
-                this.notification.show = false;
-            }, 5000);
+            // Simple notification - you can enhance this with a proper notification system
+            alert(message);
         },
         handleAuthError() {
             this.user = null;
             localStorage.removeItem('authToken');
             delete axios.defaults.headers.common['Authorization'];
-            this.showNotification('Authentication error. Please login again.', 'error');
         },
     },
 };
 </script>
 
-<template>
-    <div id="app">
-        <!-- Notification System -->
-        <div v-if="notification.show" :class="['notification', notification.type]">
-            {{ notification.message }}
-            <button @click="notification.show = false" class="close-btn">×</button>
-        </div>
-
-        <div v-if="!user" class="login-container">
-            <LoginForm @login="handleLogin" />
-        </div>
-        <div v-else class="app-container">
-            <Header :user="user" @logout="handleLogout" />
-            <div class="main-content">
-                <BalanceSection :balance="currentBalance" />
-                <TransferForm 
-                    :users="users" 
-                    @transfer="handleTransfer" 
-                    :loading="transferLoading" 
-                />
-                <TransactionHistory 
-                    :transactions="transactions" 
-                    :loading="transactionsLoading" 
-                />
-            </div>
-        </div>
-    </div>
-</template>
-
 <style>
-/* Add notification styles */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    border-radius: 8px;
-    color: white;
-    z-index: 1000;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f6fa;
+    color: #333;
+}
+
+.login-container {
     display: flex;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    min-width: 300px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.notification.success {
-    background: #27ae60;
+.app-container {
+    min-height: 100vh;
 }
 
-.notification.error {
-    background: #e74c3c;
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
 }
 
-.notification.info {
-    background: #3498db;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    margin-left: 10px;
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

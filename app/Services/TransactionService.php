@@ -57,9 +57,6 @@ class TransactionService
                 'description' => "Transfer to {$receiver->name}",
             ]);
 
-            // Reload with relationships for broadcasting
-            $transaction->load(['sender', 'receiver']);
-
             // Broadcast real-time event
             broadcast(new TransactionCompleted($transaction));
 
