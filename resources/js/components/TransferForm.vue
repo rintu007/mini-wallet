@@ -132,12 +132,13 @@ export default {
             
             try {
                 await this.$emit('transfer', this.form);
+                // Clear form on success
                 this.form.receiver_id = '';
                 this.form.amount = '';
             } catch (error) {
-                this.error = error.message;
-            }
-        },
+                    this.error = error.message;
+                }
+            },
     },
     mounted() {
         // Get current balance from parent
