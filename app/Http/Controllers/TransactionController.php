@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Services\TransactionService;
+use App\Services\HighPerformanceTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -12,7 +13,7 @@ class TransactionController extends Controller
 {
     protected $transactionService;
 
-    public function __construct(TransactionService $transactionService)
+    public function __construct(HighPerformanceTransactionService  $transactionService)
     {
         $this->transactionService = $transactionService;
     }
@@ -50,11 +51,11 @@ class TransactionController extends Controller
                 $request->amount
             );
 
-            // Return the complete transaction data including the new balance
+            // **SIMPLIFIED: Return minimal response**
+            // Pusher will handle all real-time updates
             return response()->json([
-                'message' => 'Transfer completed successfully',
-                'transaction' => $transaction->load(['sender', 'receiver']),
-                'new_balance' => $sender->fresh()->balance,
+                'message' => 'Transfer processing',
+                'transaction_id' => $transaction->id,
             ], 201);
 
         } catch (\Exception $e) {

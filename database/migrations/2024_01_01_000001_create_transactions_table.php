@@ -21,6 +21,7 @@ return new class extends Migration
 
             $table->index(['sender_id', 'created_at']);
             $table->index(['receiver_id', 'created_at']);
+            $table->index(['created_at']);
         });
     }
 

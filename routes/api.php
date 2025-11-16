@@ -33,8 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::post('/transactions', [TransactionController::class, 'store']);
     
     // Users
     Route::get('/users', [UserController::class, 'index']);
 });
+
+Route::middleware(['auth:sanctum', 'throttle.transactions:60,1']) // 60 requests per minute
+    ->post('/transactions', [TransactionController::class, 'store']);

@@ -144,13 +144,13 @@ export default {
                 const response = await axios.post('/api/transactions', transferData);
                 
                 // Show success message
-                this.showNotification('Transfer completed successfully!', 'success');
+                // this.showNotification('Transfer completed successfully!', 'success');
                 
                 // Update balance immediately from response
-                this.currentBalance = parseFloat(response.data.new_balance);
+                //this.currentBalance = parseFloat(response.data.new_balance);
                 
                 // Refresh transactions list to include the new transaction
-                await this.fetchTransactions();
+                //await this.fetchTransactions();
                 
             } catch (error) {
                 const message = error.response?.data?.message || 'Transfer failed';
