@@ -50,6 +50,7 @@ class TransactionController extends Controller
                 $request->amount
             );
 
+            // Return the complete transaction data including the new balance
             return response()->json([
                 'message' => 'Transfer completed successfully',
                 'transaction' => $transaction->load(['sender', 'receiver']),

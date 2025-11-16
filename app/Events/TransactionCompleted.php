@@ -5,7 +5,6 @@ namespace App\Events;
 use App\Models\Transaction;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -21,7 +20,7 @@ class TransactionCompleted implements ShouldBroadcast
         $this->transaction = $transaction->load(['sender', 'receiver']);
     }
 
-    public function broadcastOn()
+    public function broadcastOn(): array
     {
         return [
             new Channel('user.' . $this->transaction->sender_id),
@@ -29,16 +28,16 @@ class TransactionCompleted implements ShouldBroadcast
         ];
     }
 
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'transaction.completed';
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
         return [
             'transaction' => $this->transaction,
-            'type' => $this->transaction->sender_id === auth()->id() ? 'sent' : 'received'
+            'type' => 'transaction'
         ];
     }
 }
