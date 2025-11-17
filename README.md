@@ -73,4 +73,51 @@ npm run dev
 php artisan serve
 ```
 
+## Scheduled Jobs & Maintenance
+
+The application uses Laravel Scheduler for automated maintenance tasks. These jobs ensure data integrity and optimal performance.
+
+### Scheduled Tasks
+
+#### 1. Daily Balance Reconciliation
+**Schedule:** Daily at 2:00 AM
+**Command:** `wallet:reconcile-balances`
+**Purpose:** Verifies that user balances match their transaction history and automatically corrects minor discrepancies.
+
+#### 2. Monthly Transaction Archiving
+**Schedule:** 1st of every month at 3:00 AM  
+**Command:** `wallet:archive-transactions`
+**Purpose:** Moves transactions older than 24 months to archive tables to maintain performance.
+
+#### 3. Queue Worker Monitoring
+**Schedule:** Every minute
+**Command:** `queue:work --stop-when-empty`
+**Purpose:** Processes any pending jobs in the queue.
+
+### Setting Up the Scheduler
+
+#### For Local Development:
+The scheduler runs automatically when using `php artisan serve` in Laravel 8+.
+
+#### For Production (Linux Server):
+Add this cron entry to your server:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line (adjust path to your project):
+* * * * * cd /path/to/your/project && php artisan schedule:run >> /dev/null 2>&1
+
+# Run balance reconciliation
+php artisan wallet:reconcile-balances
+
+# Run transaction archiving
+php artisan wallet:archive-transactions
+
+# Test the scheduler
+php artisan schedule:list
+php artisan schedule:run
+```
+
 The application is now ready to use!
