@@ -154,4 +154,41 @@ class HighPerformanceTransactionService
         
         return $results;
     }
+
+
+    /**
+     * Additional safeguard: Verify balance consistency after transfer
+     */
+    private function verifyBalanceConsistency(User $sender, User $receiver, float $amount): void
+    {
+        // This can be run asynchronously after the transaction
+        $senderCalculatedBalance = $this->calculateUserBalance($sender);
+        $receiverCalculatedBalance = $this->calculateUserBalance($receiver);
+
+        $senderDiscrepancy = abs($sender->balance - $senderCalculatedBalance);
+        $receiverDiscrepancy = abs($receiver->balance - $receiverCalculatedBalance);
+
+        if ($senderDiscrepancy > 0.01 || $receiverDiscrepancy > 0.01) {
+            Log::error('Balance inconsistency detected after transfer', [
+                'transaction_amount' => $amount,
+                'sender_id' => $sender->id,
+                'sender_stored_balance' => $sender->balance,
+                'sender_calculated_balance' => $senderCalculatedBalance,
+                'receiver_id' => $receiver->id,
+                'receiver_stored_balance' => $receiver->balance,
+                'receiver_calculated_balance' => $receiverCalculatedBalance,
+            ]);
+
+            // In production, you might trigger an immediate reconciliation
+            // or alert administrators
+        }
+    }
+
+    private function calculateUserBalance(User $user): float
+    {
+        $sentTotal = Transaction::where('sender_id', $user->id)->sum('total_amount');
+        $receivedTotal = Transaction::where('receiver_id', $user->id)->sum('amount');
+        
+        return $receivedTotal - $sentTotal;
+    }
 }
