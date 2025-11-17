@@ -73,6 +73,8 @@ npm run dev
 php artisan serve
 ```
 
+The application is now ready to use!
+
 ## Scheduled Jobs & Maintenance
 
 The application uses Laravel Scheduler for automated maintenance tasks. These jobs ensure data integrity and optimal performance.
@@ -120,4 +122,3 @@ php artisan schedule:list
 php artisan schedule:run
 ```
 
-The application is now ready to use!
