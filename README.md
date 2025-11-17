@@ -36,21 +36,13 @@ PUSHER_APP_CLUSTER=mt1
 php artisan migrate
 php artisan db:seed
 ```
-### 4. Setup Database
-```bash
-# Publish Sanctum files
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
 
-# Run migrations (this will create personal_access_tokens table)
-php artisan migrate
-```
-
-### 5. Build Frontend
+### 4. Build Frontend
 ```bash
 npm run build
 ```
 
-### 6. Start Application
+### 5. Start Application
 ```bash
 # Start Laravel server
 php artisan serve
@@ -59,7 +51,7 @@ php artisan serve
 php artisan queue:work
 ```
 
-### 7. Access Application
+### 6. Access Application
 Open: http://localhost:8000
 
 ## Demo Accounts
