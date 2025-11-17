@@ -99,7 +99,7 @@ The application uses Laravel Scheduler for automated maintenance tasks. These jo
 ### Setting Up the Scheduler
 
 #### For Local Development:
-The scheduler runs automatically when using `php artisan serve` in Laravel 8+.
+The scheduler runs automatically when using `php artisan serve`.
 
 #### For Production (Linux Server):
 Add this cron entry to your server:
