@@ -29,7 +29,6 @@ return new class extends Migration
         // Add archived_at column to transactions table for tracking
         Schema::table('transactions', function (Blueprint $table) {
             $table->timestamp('archived_at')->nullable()->after('updated_at');
-            $table->index(['created_at']); // Better indexing for archiving
         });
     }
 
@@ -39,7 +38,6 @@ return new class extends Migration
         
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropColumn('archived_at');
-            $table->dropIndex(['created_at']);
         });
     }
 };
