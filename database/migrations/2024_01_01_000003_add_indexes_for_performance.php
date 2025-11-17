@@ -12,13 +12,7 @@ return new class extends Migration
             // Add index for balance queries
             $table->index(['id', 'balance']);
         });
-
-        Schema::table('transactions', function (Blueprint $table) {
-            // Add composite indexes for faster queries
-            $table->index(['sender_id', 'created_at']);
-            $table->index(['receiver_id', 'created_at']);
-            $table->index(['created_at']);
-        });
+       
     }
 
     public function down(): void
@@ -26,11 +20,6 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropIndex(['id', 'balance']);
         });
-
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropIndex(['sender_id', 'created_at']);
-            $table->dropIndex(['receiver_id', 'created_at']);
-            $table->dropIndex(['created_at']);
-        });
+       
     }
 };
